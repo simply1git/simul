@@ -11,13 +11,18 @@
   <div id="error" style="color: red; display: none;"></div>
   <ul id="file-list"></ul>
   <script>
-    // Client-side script to fetch file list from Worker
-    fetch('/files')
+    // Fetch file list from Worker
+    fetch('https://github-file-downloader.etlabcode.workers.dev/files')
       .then(response => response.json())
       .then(data => {
         if (data.error) {
           document.getElementById('error').style.display = 'block';
           document.getElementById('error').textContent = data.error;
+          return;
+        }
+        if (data.message) {
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').textContent = data.message;
           return;
         }
         const fileList = document.getElementById('file-list');
