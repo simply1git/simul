@@ -8,9 +8,33 @@
 </head>
 <body>
   <h1>Download Files</h1>
+  <div id="error" style="color: red; display: none;"></div>
   <ul id="file-list"></ul>
   <script>
-    // Placeholder for potential client-side enhancements
+    // Client-side script to fetch file list from Worker
+    fetch('/files')
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          document.getElementById('error').style.display = 'block';
+          document.getElementById('error').textContent = data.error;
+          return;
+        }
+        const fileList = document.getElementById('file-list');
+        data.files.forEach(file => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = file.url;
+          a.download = file.name;
+          a.textContent = file.name;
+          li.appendChild(a);
+          fileList.appendChild(li);
+        });
+      })
+      .catch(error => {
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Failed to load files: ' + error.message;
+      });
   </script>
 </body>
 </html>
