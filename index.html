@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bit Builders — Round 3 Unlock</title>
+
+  <!-- fonts (nice sci-fi look) -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#06070a;
+      --card: rgba(255,255,255,0.03);
+      --muted:#9aa3b2;
+      --accent:#00ffe0;
+      --accent2:#6a5cff;
+      --danger:#ff5c7c;
+      --glass: rgba(255,255,255,0.02);
+      --radius:14px;
+      --max-width:980px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: 'Orbitron', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(700px 500px at 10% 10%, rgba(106,92,255,0.06), transparent 6%),
+                  radial-gradient(600px 400px at 90% 90%, rgba(0,255,216,0.05), transparent 8%),
+                  linear-gradient(180deg,#020204 0%, var(--bg) 100%);
+      color: #e6eef6;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:36px;
+    }
+
+    .shell{
+      width:100%;
+      max-width:var(--max-width);
+      border-radius:18px;
+      padding:20px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    /* glass card */
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:12px;
+      padding:22px;
+      box-shadow: 0 12px 48px rgba(2,4,10,0.6);
+      border: 1px solid rgba(255,255,255,0.035);
+      display:grid;
+      grid-template-columns: 1fr 380px;
+      gap:20px;
+      align-items:start;
+      backdrop-filter: blur(6px);
+    }
+
+    /* header */
+    .top{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .logo{
+      width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));color:#031217;font-weight:900;font-size:20px;
+      box-shadow: 0 10px 30px rgba(106,92,255,0.1);
+      cursor:default;
+    }
+    .title h1{margin:0;font-size:20px}
+    .title p{margin:6px 0 0 0;color:var(--muted);font-size:13px}
+
+    /* left area */
+    .left{
+      padding:12px;
+    }
+    .modes{display:flex;gap:8px;margin:8px 0 14px}
+    .mode-btn{
+      padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+      background:transparent;color:var(--muted);cursor:pointer;font-weight:700;
+    }
+    .mode-btn.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#021016;box-shadow:0 8px 30px rgba(106,92,255,0.06)}
+
+    .hint{color:var(--muted);font-size:13px;margin-bottom:10px}
+
+    .grid-letters{
+      display:grid;grid-template-columns: repeat(10,1fr);gap:10px;
+    }
+
+    .letter{
+      background:rgba(255,255,255,0.014);
+      border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.03);
+      display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;
+    }
+    .letter input{
+      width:100%;border:0;background:transparent;color:inherit;font-weight:800;text-align:center;font-size:18px;
+      outline:none;
+    }
+    .letter:focus-within{box-shadow:0 10px 30px rgba(106,92,255,0.06);transform:translateY(-3px)}
+
+    .single-row{display:flex;gap:8px;align-items:center}
+    input.single{
+      flex:1;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+      background:transparent;color:inherit;font-size:18px;font-weight:700;text-transform:uppercase;
+      outline:none;
+    }
+
+    .controls{display:flex;gap:8px;margin-top:12px;align-items:center}
+    .btn-primary{padding:10px 14px;border:0;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#021016;font-weight:800;cursor:pointer}
+    .btn-ghost{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:var(--muted);cursor:pointer}
+
+    .status{margin-top:12px;font-weight:700;min-height:22px}
+    .status.ok{color:var(--accent)}
+    .status.fail{color:var(--danger)}
+
+    .progress-wrap{height:10px;background:rgba(255,255,255,0.02);border-radius:999px;margin-top:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.02)}
+    .progress{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s ease}
+
+    /* right area */
+    .right{
+      padding:18px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+      display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    .qr-box{width:240px;height:240px;border-radius:12px;background:linear-gradient(180deg,#06090a,#0d1114);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.03);box-shadow: 0 12px 48px rgba(10,12,20,0.6);transform:translateY(14px) scale(.96);opacity:0;transition:all .6s cubic-bezier(.2,.9,.3,1)}
+    .qr-box.revealed{opacity:1;transform:none}
+    .qr-box img{max-width:86%;max-height:86%;border-radius:6px}
+
+    .tip{color:var(--muted);font-size:13px;text-align:center;padding:8px 6px}
+
+    .sound-toggle{display:flex;gap:8px;align-items:center;margin-left:auto}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* scan overlay */
+    .overlay{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+    }
+    .scanner{
+      width:80%;max-width:720px;height:8px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.06));
+      border-radius:999px;overflow:hidden;transform:translateY(0);opacity:0;transition:opacity .2s;
+    }
+    .scanner.active{opacity:1}
+    .bar{height:100%;width:3%;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 6px 24px rgba(106,92,255,0.1);transform:translateX(-100%);animation:scan 1.6s linear}
+    @keyframes scan{100%{transform:translateX(200%)}}
+
+    /* confetti canvas sits above background */
+    #tsparticles{position:fixed;inset:0;z-index:-1}
+
+    @keyframes shake{
+      10%, 90%{transform:translateX(-1px)}
+      20%,80%{transform:translateX(2px)}
+      30%,50%,70%{transform:translateX(-4px)}
+      40%,60%{transform:translateX(4px)}
+    }
+
+    @media (max-width:980px){
+      .card{grid-template-columns:1fr; padding-bottom:40px}
+      .grid-letters{grid-template-columns: repeat(5,1fr)}
+      .right{order:-1}
+    }
+  </style>
+</head>
+<body>
+  <!-- particles element (tsParticles will attach here) -->
+  <div id="tsparticles" aria-hidden="true"></div>
+
+  <div class="shell" role="main" aria-labelledby="pageTitle">
+    <div class="card" role="region" aria-label="Bit Builders unlock panel">
+
+      <!-- Left column -->
+      <div class="left">
+        <div class="top">
+          <div class="logo" title="Bit Builders">BB</div>
+          <div class="title">
+            <h1 id="pageTitle">Bit Builders — Round 3</h1>
+            <p>Enter the <strong>first letters</strong> of the 20 correct answers in order to unlock the QR code.</p>
+          </div>
+
+          <div class="sound-toggle" style="margin-left:auto">
+            <label class="small" for="sound">Sound</label>
+            <input type="checkbox" id="sound" checked aria-label="Toggle sound effects">
+          </div>
+        </div>
+
+        <div class="modes" role="tablist" aria-label="Input mode">
+          <button class="mode-btn active" id="modeMulti" role="tab" aria-selected="true">Multi Inputs</button>
+          <button class="mode-btn" id="modeSingle" role="tab" aria-selected="false">Single Field</button>
+          <button class="mode-btn" id="btnHelp" title="How to play" style="margin-left:auto">Help</button>
+        </div>
+
+        <div class="hint">Auto-tab, paste-friendly. You can paste 20 letters into the first box or into the single field. Letters will be normalized to uppercase and non-alphanumerics removed.</div>
+
+        <!-- multi inputs -->
+        <div id="multiArea">
+          <div class="grid-letters" id="grid" aria-label="20 letter inputs"></div>
+        </div>
+
+        <!-- single input -->
+        <div id="singleArea" style="display:none">
+          <div class="single-row">
+            <input type="text" id="singleInput" class="single" maxlength="40" placeholder="Type or paste all 20 letters here" aria-label="All letters in one field">
+          </div>
+        </div>
+
+        <div class="progress-wrap" aria-hidden="true" title="Progress">
+          <div class="progress" id="progressBar" style="width:0%"></div>
+        </div>
+
+        <div class="controls">
+          <button class="btn-primary" id="btnUnlock" aria-label="Unlock">Unlock</button>
+          <button class="btn-ghost" id="btnClear">Clear</button>
+          <button class="btn-ghost" id="btnPaste">Paste (distribute)</button>
+        </div>
+
+        <div class="status" id="status" aria-live="polite"></div>
+      </div>
+
+      <!-- Right column -->
+      <div class="right" aria-live="polite">
+        <div style="font-weight:900;font-size:15px;margin-bottom:10px">QR Unlock</div>
+        <div class="qr-box" id="qrBox" aria-hidden="true">
+          <img id="qrImg" src="/files/qr.png" alt="Unlocked QR code (hidden until success)" style="display:none" />
+        </div>
+        <div class="tip">When the correct 20-letter key is entered, the QR will reveal with a celebratory effect. Place your QR at <code>/files/qr.png</code>.</div>
+      </div>
+
+      <!-- scanner overlay -->
+      <div class="overlay" aria-hidden="true">
+        <div class="scanner" id="scanner" role="status" aria-hidden="true"><div class="bar"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@3/tsparticles.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    /****************************************************************
+     * Final interactive page for Bit Builders Round 3
+     * - Secure verification via your Worker endpoint
+     * - Multi and Single input modes
+     * - Particle background, confetti, scan animation, sound
+     * - Paste distribution & auto-tab
+     *
+     * Worker endpoint (your provided URL):
+     ****************************************************************/
+    const WORKER_URL = "https://bitbuilders-check.etlabcode.workers.dev/";
+
+    const requiredLength = 20;
+
+    // UI elements
+    const grid = document.getElementById('grid');
+    const multiArea = document.getElementById('multiArea');
+    const singleArea = document.getElementById('singleArea');
+    const singleInput = document.getElementById('singleInput');
+    const btnUnlock = document.getElementById('btnUnlock');
+    const btnClear = document.getElementById('btnClear');
+    const btnPaste = document.getElementById('btnPaste');
+    const status = document.getElementById('status');
+    const progressBar = document.getElementById('progressBar');
+    const qrBox = document.getElementById('qrBox');
+    const qrImg = document.getElementById('qrImg');
+    const modeMulti = document.getElementById('modeMulti');
+    const modeSingle = document.getElementById('modeSingle');
+    const soundToggle = document.getElementById('sound');
+    const scanner = document.getElementById('scanner');
+    const btnHelp = document.getElementById('btnHelp');
+
+    // Audio (WebAudio synth) - small click & success tone
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = AudioContext ? new AudioContext() : null;
+
+    function playClick(){
+      if(!soundToggle.checked || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(800, now);
+      g.gain.setValueAtTime(0.001, now);
+      g.gain.exponentialRampToValueAtTime(0.08, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(now); o.stop(now + 0.14);
+    }
+
+    function playSuccess(){
+      if(!soundToggle.checked || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const o1 = audioCtx.createOscillator();
+      const o2 = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o1.type = 'sine'; o2.type = 'sine';
+      o1.frequency.setValueAtTime(440, now);
+      o2.frequency.setValueAtTime(660, now);
+      g.gain.setValueAtTime(0.001, now);
+      g.gain.linearRampToValueAtTime(0.18, now + 0.02);
+      g.gain.linearRampToValueAtTime(0.001, now + 0.7);
+      o1.connect(g); o2.connect(g); g.connect(audioCtx.destination);
+      o1.start(now); o2.start(now);
+      o1.stop(now + 0.7); o2.stop(now + 0.7);
+    }
+
+    // Build the 20 boxes
+    function buildBoxes(n=requiredLength){
+      grid.innerHTML = '';
+      for(let i=0;i<n;i++){
+        const cell = document.createElement('div');
+        cell.className = 'letter';
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.maxLength = 2; // allow paste multi, we'll normalize
+        inp.inputMode = 'text';
+        inp.dataset.index = i;
+        inp.setAttribute('aria-label', 'Letter ' + (i+1));
+        cell.appendChild(inp);
+        grid.appendChild(cell);
+
+        // events
+        inp.addEventListener('input', (e)=>{
+          // play click
+          playClick();
+
+          const val = e.target.value;
+          if(val.length > 1){
+            // distribute pasted content starting here
+            distributePaste(val, parseInt(e.target.dataset.index));
+            return;
+          }
+          // normalize
+          const norm = normalizeLetters(val).slice(0,1);
+          e.target.value = norm;
+          updateProgress();
+
+          if(norm && i < requiredLength - 1){
+            // focus next
+            const next = grid.querySelector('input[data-index="'+(i+1)+'"]');
+            if(next) next.focus();
+          }
+        });
+
+        // keyboard nav
+        inp.addEventListener('keydown', (ev)=>{
+          const idx = parseInt(ev.target.dataset.index);
+          if(ev.key === 'Backspace' && !ev.target.value){
+            const prev = grid.querySelector('input[data-index="'+(idx-1)+'"]');
+            if(prev){ prev.focus(); prev.value = ""; updateProgress(); ev.preventDefault(); }
+          } else if(ev.key === 'ArrowLeft'){
+            const prev = grid.querySelector('input[data-index="'+(idx-1)+'"]');
+            if(prev) prev.focus();
+            ev.preventDefault();
+          } else if(ev.key === 'ArrowRight'){
+            const next = grid.querySelector('input[data-index="'+(idx+1)+'"]');
+            if(next) next.focus();
+            ev.preventDefault();
+          }
+        });
+
+        // allow paste on each input
+        inp.addEventListener('paste', (ev)=>{
+          setTimeout(()=> {
+            const txt = eOrDefault(inp.value);
+            distributePaste(txt, parseInt(inp.dataset.index));
+          }, 10);
+        });
+      }
+      updateProgress();
+    }
+
+    function eOrDefault(v){ return v||""; }
+
+    function distributePaste(text, startIndex){
+      const chars = normalizeLetters(text).split('');
+      for(let i=0;i<chars.length;i++){
+        const idx = startIndex + i;
+        const inp = grid.querySelector('input[data-index="'+idx+'"]');
+        if(!inp) break;
+        inp.value = chars[i];
+      }
+      updateProgress();
+      // focus next empty
+      for(let j=startIndex;j<requiredLength;j++){
+        const inp = grid.querySelector('input[data-index="'+j+'"]');
+        if(inp && !inp.value){ inp.focus(); return; }
+      }
+      // else focus last
+      const last = grid.querySelector('input[data-index="'+(requiredLength-1)+'"]');
+      if(last) last.focus();
+    }
+
+    // Normalization: keep A-Z 0-9 and uppercase
+    function normalizeLetters(s){
+      return (s||"").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    }
+
+    // assemble current string
+    function getCurrentString(){
+      if(multiArea.style.display !== 'none'){
+        const arr = Array.from(grid.querySelectorAll('input')).map(i => normalizeLetters(i.value).slice(0,1));
+        return arr.join('');
+      } else {
+        return normalizeLetters(singleInput.value).slice(0, requiredLength);
+      }
+    }
+
+    // update progress
+    function updateProgress(){
+      const s = getCurrentString();
+      const filled = s.replace(/[^A-Z0-9]/g,'').length;
+      const pct = Math.min(100, Math.round((filled/requiredLength)*100));
+      progressBar.style.width = pct + '%';
+    }
+
+    // show/hide qr
+    function revealQR(){
+      qrImg.style.display = 'block';
+      qrBox.classList.add('revealed');
+    }
+    function hideQR(){
+      qrImg.style.display = 'none';
+      qrBox.classList.remove('revealed');
+    }
+
+    // scan animation (plays while verifying)
+    function startScan(){
+      scanner.classList.add('active');
+    }
+    function stopScan(){
+      scanner.classList.remove('active');
+    }
+
+    // failure animation
+    function failAnimation(msg){
+      status.className = 'status fail';
+      status.textContent = msg || 'Incorrect — try again.';
+      const leftPanel = document.querySelector('.left');
+      leftPanel.style.animation = 'shake .5s';
+      setTimeout(()=> leftPanel.style.animation = '', 520);
+      hideQR();
+      // small negative sound
+      if(soundToggle.checked && audioCtx){
+        const now = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'triangle'; o.frequency.setValueAtTime(220, now);
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(0.06, now+0.02);
+        g.gain.linearRampToValueAtTime(0.001, now+0.2);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(now); o.stop(now+0.22);
+      }
+    }
+
+    // success celebration
+    function celebrate(){
+      status.className = 'status ok';
+      status.textContent = 'Correct — QR unlocked!';
+      revealQR();
+      // confetti burst
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        ticks: 250,
+        origin: { y: 0.6 }
+      });
+      // sound
+      playSuccess();
+    }
+
+    // verify with worker
+    async function verifyWithWorker(key){
+      startScan();
+      status.textContent = 'Verifying...';
+      try{
+        const res = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key })
+        });
+        stopScan();
+        if(!res.ok){
+          failAnimation('Server error. Try again.');
+          return;
+        }
+        const data = await res.json();
+        if(data && data.success){
+          celebrate();
+        } else {
+          failAnimation(data && data.message ? data.message : 'Incorrect.');
+        }
+      }catch(err){
+        stopScan();
+        failAnimation('Network error.');
+      }
+    }
+
+    // click handlers
+    btnUnlock.addEventListener('click', async ()=>{
+      const s = getCurrentString();
+      if(s.length !== requiredLength){
+        failAnimation(`Enter exactly ${requiredLength} letters (${s.length} entered).`);
+        return;
+      }
+      // POST to worker
+      await verifyWithWorker(s);
+    });
+
+    btnClear.addEventListener('click', ()=>{
+      Array.from(grid.querySelectorAll('input')).forEach(i => i.value = '');
+      singleInput.value = '';
+      status.textContent = '';
+      status.className = 'status';
+      updateProgress();
+      hideQR();
+      // focus first
+      const first = grid.querySelector('input[data-index="0"]');
+      if(first) first.focus();
+    });
+
+    btnPaste.addEventListener('click', async ()=>{
+      // allow user to paste via prompt (convenience)
+      const txt = prompt("Paste the 20 letters (they will distribute across inputs):");
+      if(!txt) return;
+      const norm = normalizeLetters(txt).slice(0, requiredLength);
+      for(let i=0;i<requiredLength;i++){
+        const inp = grid.querySelector('input[data-index="'+i+'"]');
+        if(!inp) break;
+        inp.value = norm[i]||'';
+      }
+      updateProgress();
+    });
+
+    // mode toggle
+    modeMulti.addEventListener('click', ()=> setMode('multi'));
+    modeSingle.addEventListener('click', ()=> setMode('single'));
+
+    function setMode(m){
+      if(m === 'multi'){
+        multiArea.style.display = '';
+        singleArea.style.display = 'none';
+        modeMulti.classList.add('active');
+        modeSingle.classList.remove('active');
+      } else {
+        multiArea.style.display = 'none';
+        singleArea.style.display = '';
+        modeSingle.classList.add('active');
+        modeMulti.classList.remove('active');
+        // echo single input to boxes so progress updates
+        setTimeout(()=> {
+          const val = normalizeLetters(singleInput.value).slice(0, requiredLength);
+          for(let i=0;i<requiredLength;i++){
+            const inp = grid.querySelector('input[data-index="'+i+'"]');
+            if(inp) inp.value = val[i]||'';
+          }
+          updateProgress();
+        }, 50);
+      }
+      hideQR();
+      status.textContent = '';
+      updateProgress();
+    }
+
+    // when user pastes into first multi input, distribute
+    document.addEventListener('paste', (ev)=>{
+      const active = document.activeElement;
+      if(active && active.dataset && typeof active.dataset.index !== 'undefined'){
+        // let input event handle distribution if pasted directly into an input
+        // but we also handle case paste into page (e.g., first box is not focused)
+        setTimeout(()=> {
+          const first = grid.querySelector('input[data-index="0"]');
+          if(first && first.value.length>1){
+            distributePaste(first.value, 0);
+          }
+        }, 10);
+      }
+    });
+
+    // single input paste handler: distribute into boxes (for convenience)
+    singleInput.addEventListener('input', ()=>{
+      const val = normalizeLetters(singleInput.value).slice(0, requiredLength);
+      for(let i=0;i<requiredLength;i++){
+        const inp = grid.querySelector('input[data-index="'+i+'"]');
+        if(inp) inp.value = val[i]||'';
+      }
+      updateProgress();
+    });
+
+    // quick help
+    btnHelp.addEventListener('click', ()=> {
+      alert("Round 3: You must enter the FIRST LETTER of each of the 20 answers, in order. You can type them into the 20 boxes or paste them into the single field. Letters are normalized A-Z and 0-9. Click Unlock to verify.");
+    });
+
+    // init
+    buildBoxes();
+    hideQR();
+
+    // focus first box on load
+    setTimeout(()=> {
+      const f = grid.querySelector('input[data-index="0"]');
+      if(f) f.focus();
+    }, 120);
+
+    // keyboard: Enter triggers unlock
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter') btnUnlock.click();
+    });
+
+    // initialize tsParticles
+    (function initParticles(){
+      // confine configuration to keep it lightweight and subtle
+      tsParticles.load("tsparticles", {
+        fullScreen: { enable: true, zIndex: -1 },
+        particles: {
+          number: { value: 38, density: { enable: true, area: 800 } },
+          color: { value: ["#00ffe0","#6a5cff","#00b8ff"] },
+          shape: { type: "circle" },
+          opacity: { value: 0.45, random: { enable: true, minimumValue: 0.15 } },
+          size: { value: { min: 1, max: 3 } },
+          links: { enable: true, distance: 110, color: "#00ffe0", opacity: 0.06, width: 1 },
+          move: { enable: true, speed: 0.6, direction: "none", outModes: "out" }
+        },
+        interactivity: {
+          events: {
+            onHover: { enable: true, mode: "grab" },
+            onClick: { enable: true, mode: "push" }
+          },
+          modes: {
+            grab: { distance: 160, links: { opacity: 0.12 } },
+            push: { quantity: 3 }
+          }
+        },
+        detectRetina: true
+      });
+    })();
+
+    // Small console guidance for organizer
+    console.log("Bit Builders unlock page initialized. Worker URL:", WORKER_URL);
+
+  </script>
+</body>
+</html>
